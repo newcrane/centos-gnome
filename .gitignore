@@ -16,8 +16,8 @@ buildNumber.properties
 *.log
 
 # About IntelliJ
-/.idea/
-/out/
+.idea/
+out/
 
 # BlueJ files
 *.ctxt
