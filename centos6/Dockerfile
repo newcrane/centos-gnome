@@ -1,17 +1,21 @@
 FROM centos:centos6
-MAINTAINER Crane <crane001@163.com>
+MAINTAINER Nuts Project, LLC <dev@nutsproject.jp>
 
-ENV ROOT_PASSWD=centospassword
+ENV ROOT_PASSWD=centos \
+    USER_PASSWD=password
 
 # Install base( except "X Window System" "fonts" )
 RUN yum update -y && yum groupinstall -y \
         "Desktop" \
+        "Japanese Support" \
     && yum install -y \
         epel-release \
         sudo \
         gedit \
         python-setuptools \
     && yum clean all && rm -rf /tmp/* \
+    && echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/wheel \
+    && chmod 0440 /etc/sudoers.d/wheel
 
 # Supervisor
 RUN easy_install supervisor \
@@ -21,8 +25,8 @@ RUN easy_install supervisor \
         echo '[supervisord]'; \
         echo 'nodaemon=true'; \
         echo 'logfile=/var/log/supervisor/supervisord.log'; \
-        echo 'logfile_maxbytes=10MB'; \
-        echo 'logfile_backups=2'; \
+        echo 'logfile_maxbytes=1MB'; \
+        echo 'logfile_backups=1'; \
         echo 'loglevel=warn'; \
         echo 'pidfile=/var/run/supervisord.pid'; \
         echo '[include]'; \
@@ -39,8 +43,9 @@ RUN yum update -y \
 	&& yum clean all && rm -rf /tmp/* \
 	&& chkconfig vncserver on 3456 \
     && { \
-        echo 'VNCSERVERS="0:root'; \
+        echo 'VNCSERVERS="0:root 1:toybox"'; \
         echo 'VNCSERVERARGS[0]="-geometry 1280x960"'; \
+        echo 'VNCSERVERARGS[1]="-geometry 1280x960"'; \
     } >> /etc/sysconfig/vncservers \
 	&& chkconfig xrdp on 3456 \
 	&& chmod -v +x /etc/init.d/xrdp \
@@ -62,6 +67,9 @@ RUN yum update -y \
 # Create User
 RUN su root sh -c "yes $ROOT_PASSWD | vncpasswd" \
     && echo "root:$ROOT_PASSWD" | chpasswd \
+	&& useradd -g wheel toybox \
+	&& su toybox sh -c "yes $USER_PASSWD | vncpasswd" \
+    && echo "toybox:$USER_PASSWD" | chpasswd
 
 # GNOME Settings for all users
 RUN gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
@@ -91,8 +99,9 @@ RUN gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mand
 
 EXPOSE 5900 5901 3389
 
-# COPY docker-entrypoint.sh /entrypoint.sh
+COPY docker-entrypoint.sh /entrypoint.sh
+#COPY /installer/ /installer/
 
-# ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["supervisord"]
