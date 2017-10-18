@@ -39,7 +39,7 @@ RUN yum update -y \
 	&& yum clean all && rm -rf /tmp/* \
 	&& chkconfig vncserver on 3456 \
     && { \
-        echo 'VNCSERVERS="0:root'; \
+        echo 'VNCSERVERS="0:root"'; \
         echo 'VNCSERVERARGS[0]="-geometry 1280x960"'; \
     } >> /etc/sysconfig/vncservers \
 	&& chkconfig xrdp on 3456 \
@@ -90,7 +90,7 @@ RUN gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mand
 	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
 	    --type bool --set /desktop/gnome/remote_access/prompt_enabled false
 
-EXPOSE 5900 5901 3389
+EXPOSE 5900 3389
 
 # COPY docker-entrypoint.sh /entrypoint.sh
 
