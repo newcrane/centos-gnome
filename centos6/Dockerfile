@@ -40,7 +40,7 @@ RUN yum update -y \
 	&& chkconfig vncserver on 3456 \
     && { \
         echo 'VNCSERVERS="0:root"'; \
-        echo 'VNCSERVERARGS[0]="-geometry 1280x960"'; \
+        echo 'VNCSERVERARGS[0]="-geometry 1024x768"'; \
     } >> /etc/sysconfig/vncservers \
 	&& chkconfig xrdp on 3456 \
 	&& chmod -v +x /etc/init.d/xrdp \
@@ -62,33 +62,11 @@ RUN yum update -y \
 # Create User
 RUN su root sh -c "yes $ROOT_PASSWD | vncpasswd" \
     && echo "root:$ROOT_PASSWD" | chpasswd
+# time zone
+RUN sed -i -e "s:ZONE=\"Etc/UTC\":ZONE=\"Asia/Shanghai\":" /etc/sysconfig/clock \
+    && rm -rf /etc/localtime \
+    && cp -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-
-# GNOME Settings for all users
-RUN gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type bool  --set /apps/nautilus/preferences/always_use_browser true \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type bool --set /apps/gnome-screensaver/idle_activation_enabled false \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type bool --set /apps/gnome-screensaver/lock_enabled false \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type int --set /apps/metacity/general/num_workspaces 1 \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type=string --set /apps/gnome_settings_daemon/keybindings/screensaver ' ' \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type=string --set /apps/gnome_settings_daemon/keybindings/power ' ' \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type bool --set /apps/panel/global/disable_log_out true \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type int --set /apps/gnome-power-manager/timeout/sleep_computer_ac '0' \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type int --set /apps/gnome-power-manager/timeout/sleep_display_ac '0' \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type int --set /apps/gnome-screensaver/power_management_delay '0' \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type bool --set /desktop/gnome/remote_access/enabled true \
-	&& gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.mandatory \
-	    --type bool --set /desktop/gnome/remote_access/prompt_enabled false
 
 EXPOSE 5900 3389
 
